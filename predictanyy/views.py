@@ -80,11 +80,9 @@ def subscribe_to_notifications(request):
         'hub.mode': 'subscribe',
         'hub.callback': callback_url,
         'hub.topic': topic_url,
-        'hub.verify': 'async'
+        'hub.verify': 'sync'
     }
     response = requests.post('https://pubsubhubbub.appspot.com/subscribe', data=params)
-
-    # Check if subscription was successful
     if response.status_code == 200:
         return JsonResponse({'message': 'Subscribed to YouTube notifications successfully'})
     else:
@@ -92,13 +90,26 @@ def subscribe_to_notifications(request):
 
 @csrf_exempt
 def subscription_callback(request):
-    if request.method == 'GET' and request.GET.get('hub.mode') == 'subscribe':
-        challenge = request.GET.get('hub.challenge')
-        return HttpResponse(challenge)
-    return HttpResponse(status=200)
+    if request.method == 'POST':
+       #data = json.loads(request.body)
+        feed_data = request.body
+        parsed_feed = feedparser.parse(feed_data)
 
-class WebhookView(APIView):
-    def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
-        # Process the notification data
-        return Response({'message': 'Notification received'}, status=200)
+        # Process the feed data and save it to the database
+        for entry in parsed_feed.entries:
+            video_id = entry.get('yt_videoId')
+            channel_id = entry.get('yt_channelId')
+            video_link = entry.get('link')
+
+            # Save the data to the database
+            YouTubeVideo.objects.create(
+                video_id=video_id,
+                channel_id=channel_id,
+                video_link=video_link
+            )
+        
+        return HttpResponse(status=200)
+
+
+
+        
