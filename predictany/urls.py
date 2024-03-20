@@ -17,10 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from predictanyy import views
-from predictanyy.views import pubsubhub_callback
+from predictanyy.views import subscription_callback,subscribe_to_notifications
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('callback/', views.pubsubhub_callback, name='pubsubhub_callback'),
+    path('callback/', views.subscription_callback, name='subscription_callback'),
 ]
-

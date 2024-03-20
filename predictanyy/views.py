@@ -2,13 +2,19 @@ from .models import YouTubeVideo
 from datetime import datetime
 from django.http import HttpResponse
 import feedparser
-
+from rest_framework.views import APIView
+from rest_framework.response import Response
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import requests
+'''
 def pubsubhub_callback(request):
     if request.method == 'GET':
         # Parse the incoming Atom feed notification
         feed_data = request.body
         parsed_feed = feedparser.parse(feed_data)
-        '''
+
         # Process the feed data and save it to the database
         for entry in parsed_feed.entries:
             video_id = entry.get('yt_videoId')
@@ -29,7 +35,7 @@ def pubsubhub_callback(request):
                 published_at=published_at,
                 updated_at=updated_at
             )
-            '''
+
         # Return a success response
         return HttpResponse(status=200)
     else:
@@ -61,3 +67,38 @@ def subscribe_to_notifications(request):
         return JsonResponse({'message': 'Subscribed to YouTube notifications successfully'})
     else:
         return JsonResponse({'message': 'Failed to subscribe to YouTube notifications'}, status=500)
+'''
+
+
+def subscribe_to_notifications(request):
+    # Send subscription request to Google hub
+    callback_url = 'https://afe2-39-33-157-71.ngrok-free.app/callback/'  # Replace with your actual callback URL
+    topic_url = 'https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCypzG0nv9B65DwOLJ578rZQ'  # Replace with your actual channel ID
+
+    # Subscription request parameters
+    params = {
+        'hub.mode': 'subscribe',
+        'hub.callback': callback_url,
+        'hub.topic': topic_url,
+        'hub.verify': 'async'
+    }
+    response = requests.post('https://pubsubhubbub.appspot.com/subscribe', data=params)
+
+    # Check if subscription was successful
+    if response.status_code == 200:
+        return JsonResponse({'message': 'Subscribed to YouTube notifications successfully'})
+    else:
+        return JsonResponse({'message': 'Failed to subscribe to YouTube notifications'}, status=500)
+
+@csrf_exempt
+def subscription_callback(request):
+    if request.method == 'GET' and request.GET.get('hub.mode') == 'subscribe':
+        challenge = request.GET.get('hub.challenge')
+        return HttpResponse(challenge)
+    return HttpResponse(status=200)
+
+class WebhookView(APIView):
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        # Process the notification data
+        return Response({'message': 'Notification received'}, status=200)

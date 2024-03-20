@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'predictanyy',
 ]
 
-CSRF_TRUSTED_ORIGINS = ['https://d415-39-33-195-201.ngrok-free.app/']
+CSRF_TRUSTED_ORIGINS = ['https://afe2-39-33-157-71.ngrok-free.app']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
